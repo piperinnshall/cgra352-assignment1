@@ -5,13 +5,12 @@ use opencv::{
     imgcodecs,
 };
 
-
 fn main() -> Result<(), Box<dyn Error>> {
     let source_img = imgcodecs::imread("car.png", imgcodecs::IMREAD_UNCHANGED)?;
 
     // Flipping image horizontally
-    let mut destination_arr = Mat::default();
-    core::flip(&source_img, &mut destination_arr, 1)?;
+    // let mut destination_arr = Mat::default();
+    // core::flip(&source_img, &mut destination_arr, 1)?;
 
     // Creating an output image
     let arguments: Vector<i32> = Vector::new();
