@@ -9,8 +9,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let flower_mat = imgcodecs::imread("assets/Flower.jpg", imgcodecs::IMREAD_UNCHANGED)?;
     let flower_mat_hsv = convert_to_hsv(&flower_mat)?;
 
+    let height = flower_mat_hsv.rows() * 2;
     let width = flower_mat_hsv.cols() * 3;
+    let empty_mat = Mat::zeros(height, width, opencv::core::CV_8UC1)?;
 
+
+    imgcodecs::imwrite("empty.jpg", &empty_mat, &params)?;
     // imgcodecs::imwrite("hsv.jpg", &flower_mat_hsv, &params)?;
     Ok(())
 }
