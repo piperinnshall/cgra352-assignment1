@@ -5,27 +5,30 @@ use opencv::{
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let params = Vector::new();
-    let flower_img = imgcodecs::imread("assets/Flower.jpg", imgcodecs::IMREAD_UNCHANGED)?;
+    let params = Vector::<i32>::new();
+    let flower_mat = imgcodecs::imread("assets/Flower.jpg", imgcodecs::IMREAD_UNCHANGED)?;
+    let flower_mat_hsv = convert_to_hsv(&flower_mat)?;
 
-    let hsv_img = convert_to_hsv(&flower_img)?;
-    let width = hsv_img.cols() * 3;
+    let width = flower_mat_hsv.cols() * 3;
 
-    imgcodecs::imwrite("hsv.jpg", &hsv_img, &params)?;
-
+    // imgcodecs::imwrite("hsv.jpg", &flower_mat_hsv, &params)?;
     Ok(())
 }
 
-// fn split_bgr(mat: &Mat
-
-fn convert_to_hsv(material: &Mat) -> Result<Mat, Box<dyn Error>> {
-    let mut dest_material = Mat::default();
+fn convert_to_hsv(src: &Mat) -> Result<Mat, Box<dyn Error>> {
+    let mut dst = Mat::default();
     imgproc::cvt_color(
-        material,
-        &mut dest_material,
+        src,
+        &mut dst,
         imgproc::COLOR_BGR2HSV,
         0,
         AlgorithmHint::ALGO_HINT_DEFAULT,
     )?;
-    Ok(dest_material)
+    Ok(dst)
+}
+
+fn split_bgr(src: &Mat) -> Result<(Mat, Mat, Mat), Box<dyn Error>> {
+    let mut channels: Vector<Mat> = vec![Mat::default(); src.channels() as usize].into();
+    opencv::core::split(src, &mut channels)?;
+    Ok((channels.get(0)?, channels.get(1)?, channels.get(2)?))
 }
