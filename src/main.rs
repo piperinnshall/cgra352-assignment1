@@ -4,12 +4,13 @@ use anyhow::Result;
 use opencv::{core::Vector, imgcodecs, imgproc};
 
 fn main() -> Result<()> {
-    let params = Vector::new();
-    core(params)?;
+    let params = Vector::default();
+    core(&params)?;
+    completion(&params)?;
     Ok(())
 }
 
-fn core(params: Vector<i32>) -> Result<()> {
+fn core(params: &Vector<i32>) -> Result<()> {
     let flower_bgr = imgcodecs::imread("assets/Flower.jpg", imgcodecs::IMREAD_UNCHANGED)?;
     let flower_hsv = core::convert_matrix_color_space(&flower_bgr, imgproc::COLOR_BGR2HSV)?;
 
@@ -38,3 +39,11 @@ fn core(params: Vector<i32>) -> Result<()> {
 
     Ok(())
 }
+
+fn completion(params: &Vector<i32>) -> Result<()> {
+    let flower_grey = imgcodecs::imread("assets/Flower.jpg", imgcodecs::IMREAD_GRAYSCALE)?;
+
+    // imgcodecs::imwrite("assets/Completion0.jpg", &flower_grey, &params)?;
+    Ok(())
+}
+

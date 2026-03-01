@@ -1,7 +1,8 @@
 use anyhow::{anyhow, Result};
 use opencv::{
     core::{
-        AlgorithmHint, Mat, MatExprTraitConst, MatTrait, MatTraitConst, Rect, Scalar, Vec3b, Vector, VectorToVec
+        AlgorithmHint, Mat, MatExprTraitConst, MatTrait, MatTraitConst, Rect, Scalar, Vec3b,
+        Vector, VectorToVec,
     },
     imgproc,
 };
@@ -118,10 +119,10 @@ pub fn euclidean_mask(m: &Mat) -> Result<Mat> {
     // Create a zero-initialized greyscale Matrix
     let mut dst = Mat::zeros(m.rows(), m.cols(), opencv::core::CV_8UC1)?.to_mat()?;
 
-    let px_eighty = m.at_2d::<Vec3b>(80,80)?;
+    let px_eighty = m.at_2d::<Vec3b>(80, 80)?;
 
-    for y in 0 .. m.rows() {
-        for x in 0 .. m.cols() {
+    for y in 0..m.rows() {
+        for x in 0..m.cols() {
             let px = m.at_2d::<Vec3b>(y, x)?;
             let norm = opencv::core::norm2(
                 px,
@@ -135,4 +136,78 @@ pub fn euclidean_mask(m: &Mat) -> Result<Mat> {
         }
     }
     Ok(dst)
+}
+
+/**
+Converts an image Matrix to an image Matrix with a border.
+*/
+fn border(src: &Mat) -> Result<Mat> {
+    let top = 1;
+    let bottom = 1;
+    let left = 1;
+    let right = 1;
+
+    let mut dst = Mat::zeros(
+        src.rows() + top + bottom,
+        src.cols() + left + right,
+        opencv::core::CV_8UC1,
+    )?
+    .to_mat()?;
+
+    opencv::core::copy_make_border(
+        src,
+        &mut dst,
+        top,
+        bottom,
+        left,
+        right,
+        opencv::core::BORDER_REFLECT_101,
+        Scalar::default(),
+    )?;
+
+    Ok(dst)
+}
+
+fn neighborhood(m: &Mat, y: i32, x: i32) -> Result<Vec<u8>> {
+    let mut neighb: Vec<u8> = Vec::with_capacity(9);
+    
+    for i in 0..3 {
+        for j in 0..3 {
+            neighb.push(*m.at_2d::<u8>(y + i, x + j)?);
+        }
+    }
+    Ok(neighb)
+}
+
+fn derive(direction_matrix: &[[i32; 3]; 3], neighborhood: u8) -> Result<i32> {
+
+    Ok(0)
+}
+
+/**
+  Converts an image Matrix to edge filter responses in the x and y directions.
+  */
+pub fn sobel_edge_detection(m: &Mat) -> Result<(Mat, Mat)> {
+    let horizontal = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]];
+    let vertical = [[-1, -2, -1], [0, 0, 0], [1, 2, 1]];
+
+    let mut dst_x = border(m)?;
+    let mut dst_y = border(m)?;
+
+    for y in 1..m.rows() - 1 {
+        for x in 1..m.cols() - 1 {
+
+
+            // let px = m.at_2d::<Vec3b>(y, x)?;
+
+            let neighb = neighborhood(m, y, x);
+
+
+
+            // let dst_x_px = dst_x.at_2d_mut::<u8>(y, x)?;
+            // let dst_y_px = dst_y.at_2d_mut::<u8>(y, x)?;
+        }
+    }
+
+    Ok((dst_x, dst_y))
 }
