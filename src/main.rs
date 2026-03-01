@@ -32,7 +32,7 @@ fn core(params: Vector<i32>) -> Result<()> {
     core_2.append(&mut flower_hsv_split.2);
 
     let core_2_large = create_large_image(&core_2, 3, 5, opencv::core::CV_8UC3)?;
-    imgcodecs::imwrite("assets/Core2.png", &convert_matrix(&core_2_large, imgproc::COLOR_HSV2BGR)?, &params)?;
+    imgcodecs::imwrite("assets/Core2.jpg", &convert_matrix(&core_2_large, imgproc::COLOR_HSV2BGR)?, &params)?;
 
     Ok(())
 }
