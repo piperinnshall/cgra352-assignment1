@@ -14,7 +14,7 @@ fn main() -> Result<()> {
 
 fn core(params: Vector<i32>) -> Result<()> {
     let flower_bgr = imgcodecs::imread("assets/Flower.jpg", imgcodecs::IMREAD_UNCHANGED)?;
-    let flower_hsv = convert_to_hsv(&flower_bgr)?;
+    let flower_hsv = convert_matrix(&flower_bgr, imgproc::COLOR_BGR2HSV)?;
 
     // Core 1
     let mut core_1 = Vec::new();
@@ -32,30 +32,17 @@ fn core(params: Vector<i32>) -> Result<()> {
     core_2.append(&mut flower_hsv_split.2);
 
     let core_2_large = create_large_image(&core_2, 3, 5, opencv::core::CV_8UC3)?;
-    imgcodecs::imwrite("assets/Core2.png", &convert_to_bgr(&core_2_large)?, &params)?;
+    imgcodecs::imwrite("assets/Core2.png", &convert_matrix(&core_2_large, imgproc::COLOR_HSV2BGR)?, &params)?;
 
     Ok(())
 }
 
 /**
-Converts a HSV image Matrix to an BGR image Matrix.
+Converts an image Matrix to an image Matrix of different type.
 */
-fn convert_to_bgr(m: &Mat) -> Result<Mat> {
+fn convert_matrix(m: &Mat, code: i32) -> Result<Mat> {
     let mut dst = Mat::default();
     let dst_cn = 0;
-    let code = imgproc::COLOR_HSV2BGR;
-    let algo = AlgorithmHint::ALGO_HINT_DEFAULT;
-    imgproc::cvt_color(m, &mut dst, code, dst_cn, algo)?;
-    Ok(dst)
-}
-
-/**
-Converts a BGR image Matrix to an HSV image Matrix.
-*/
-fn convert_to_hsv(m: &Mat) -> Result<Mat> {
-    let mut dst = Mat::default();
-    let dst_cn = 0;
-    let code = imgproc::COLOR_BGR2HSV;
     let algo = AlgorithmHint::ALGO_HINT_DEFAULT;
     imgproc::cvt_color(m, &mut dst, code, dst_cn, algo)?;
     Ok(dst)
