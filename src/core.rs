@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use opencv::{
     core::{
-        AlgorithmHint, Mat, MatExprTraitConst, MatTrait, MatTraitConst, Point, Rect, Scalar, Vec3b, Vector, VectorToVec
+        AlgorithmHint, Mat, MatExprTraitConst, MatTrait, MatTraitConst, Rect, Scalar, Vec3b, Vector, VectorToVec
     },
     imgproc,
 };
@@ -87,6 +87,7 @@ pub fn create_large_image(
     let small_image = images
         .get(0)
         .ok_or_else(|| anyhow!("Err: Images is empty"))?;
+
     let height = small_image.rows() * large_image_height;
     let width = small_image.cols() * large_image_width;
 
@@ -94,8 +95,8 @@ pub fn create_large_image(
     let mut large_image = Mat::zeros(height, width, typ)?.to_mat()?;
 
     for (idx, m) in images.iter().enumerate() {
-        let width = m.cols();
         let height = m.rows();
+        let width = m.cols();
 
         let row = idx as i32 / large_image_width;
         let col = idx as i32 % large_image_width;
@@ -117,11 +118,11 @@ pub fn euclidean_mask(m: &Mat) -> Result<Mat> {
     // Create a zero-initialized greyscale Matrix
     let mut dst = Mat::zeros(m.rows(), m.cols(), opencv::core::CV_8UC1)?.to_mat()?;
 
-    let px_eighty = locate_pixel_at(&m, 80, 80)?;
+    let px_eighty = m.at_2d::<Vec3b>(80,80)?;
 
-    for y in 0..m.rows() {
-        for x in 0..m.cols() {
-            let px = locate_pixel_at(&m, x, y)?;
+    for y in 0 .. m.rows() {
+        for x in 0 .. m.cols() {
+            let px = m.at_2d::<Vec3b>(y, x)?;
             let norm = opencv::core::norm2(
                 px,
                 px_eighty,
@@ -129,17 +130,9 @@ pub fn euclidean_mask(m: &Mat) -> Result<Mat> {
                 &opencv::core::no_array(),
             )?;
 
-            let dst_px = dst.at_pt_mut::<u8>(Point::new(x, y))?;
+            let dst_px = dst.at_2d_mut::<u8>(y, x)?;
             *dst_px = if norm < 100.0 { 255 } else { 0 }
         }
     }
     Ok(dst)
-}
-
-/**
- Returns the pixel of an image Matrix at the given x and y.
-*/
-fn locate_pixel_at(m: &Mat, x: i32, y: i32) -> Result<&Vec3b> {
-    m.at_pt(Point::new(x, y))
-        .map_err(|e| anyhow!(e.to_string()))
 }

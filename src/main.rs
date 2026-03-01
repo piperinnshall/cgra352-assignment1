@@ -1,7 +1,7 @@
 mod core;
 
 use anyhow::Result;
-use opencv::{core::{MatTraitConst, Vector}, imgcodecs, imgproc};
+use opencv::{core::Vector, imgcodecs, imgproc};
 
 fn main() -> Result<()> {
     let params = Vector::new();
