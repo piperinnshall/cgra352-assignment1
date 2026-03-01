@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use opencv::{
     core::{
-        AlgorithmHint, Mat, MatExprTraitConst, MatTraitConst, Rect, Vector, VectorToVec,
+        AlgorithmHint, Mat, MatExprTraitConst, MatTraitConst, Rect, Scalar, Vector, VectorToVec,
     },
     imgcodecs, imgproc,
 };
@@ -16,28 +16,37 @@ fn core(params: Vector<i32>) -> Result<()> {
     let flower_bgr = imgcodecs::imread("assets/Flower.jpg", imgcodecs::IMREAD_UNCHANGED)?;
     let flower_hsv = convert_to_hsv(&flower_bgr)?;
 
-    let flower_bgr_split = split_channels(&flower_bgr)?;
-    let flower_hsv_split = split_channels(&flower_hsv)?;
-
     // Core 1
     let mut core_1 = Vec::new();
-    core_1.extend(flower_bgr_split.clone());
-    core_1.extend(flower_hsv_split.clone());
+    core_1.append(&mut split_channels(&flower_bgr)?);
+    core_1.append(&mut split_channels(&flower_hsv)?);
 
-    let large = create_large_image(&core_1, 2, 3)?;
-    imgcodecs::imwrite("assets/Core1.jpg", &large, &params)?;
+    let core_1_large = create_large_image(&core_1, 2, 3, opencv::core::CV_8UC1)?;
+    imgcodecs::imwrite("assets/Core1.jpg", &core_1_large, &params)?;
 
     // Core 2
-    // let mut core_2 = Vec::new();
-    
-    // merge_channels(Vector::from_slice());
-    // core_2.extend(multiply_channel(&flower_hsv_split[0].clone())?); // Hue
-    // core_2.extend(multiply_channel(&flower_hsv_split[1].clone())?); // Saturation
-    // core_2.extend(multiply_channel(&flower_hsv_split[2].clone())?); // Value
+    let mut core_2 = Vec::new();
+    let mut flower_hsv_split = unzip3(multiply_channel(&flower_hsv)?);
+    core_2.append(&mut flower_hsv_split.0);
+    core_2.append(&mut flower_hsv_split.1);
+    core_2.append(&mut flower_hsv_split.2);
 
-    imgcodecs::imwrite("assets/Core2.jpg", &core_2[0], &params)?;
+    let core_2_large = create_large_image(&core_2, 3, 5, opencv::core::CV_8UC3)?;
+    imgcodecs::imwrite("assets/Core2.png", &convert_to_bgr(&core_2_large)?, &params)?;
 
     Ok(())
+}
+
+/**
+Converts a HSV image Matrix to an BGR image Matrix.
+*/
+fn convert_to_bgr(m: &Mat) -> Result<Mat> {
+    let mut dst = Mat::default();
+    let dst_cn = 0;
+    let code = imgproc::COLOR_HSV2BGR;
+    let algo = AlgorithmHint::ALGO_HINT_DEFAULT;
+    imgproc::cvt_color(m, &mut dst, code, dst_cn, algo)?;
+    Ok(dst)
 }
 
 /**
@@ -62,28 +71,44 @@ fn split_channels(m: &Mat) -> Result<Vec<Mat>> {
 }
 
 /**
- * 
-Creates one multi-channel Matrix out of several single-channel ones.
+Multiplies a multi-channel Matrix by a scalar.
 */
-fn merge_channels(mv: &Vector<Mat>) -> Result<Mat> {
-    let mut m = Mat::default();
-    opencv::core::merge(mv, &mut m);
-    Ok(m)
+pub fn multiply(src: &Mat, scalar: Scalar) -> Result<Mat> {
+    let mut dst = Mat::default();
+    opencv::core::multiply_def(src, &scalar, &mut dst)?;
+    Ok(dst)
 }
 
 /**
-Multiplies a single-channel Matrix by 0.0, 0.2, 0.4, 0.6, and 0.8.
+Multiplies an HSV Matrix by 0.0, 0.2, 0.4, 0.6, and 0.8 at each of its channels.
 */
-fn multiply_channel(m: &Mat) -> Result<Vec<Mat>> {
+fn multiply_channel(m: &Mat) -> Result<Vec<(Mat, Mat, Mat)>> {
     [0.0, 0.2, 0.4, 0.6, 0.8]
         .iter()
-        .map(|&mult| {
-            (m * mult)
-                .into_result()?
-                .to_mat()
-                .map_err(|e| anyhow!(e.to_string()))
+        .map(|&scalar| {
+            let h = multiply(m, Scalar::new(scalar, 1.0, 1.0, 1.0))?;
+            let s = multiply(m, Scalar::new(1.0, scalar, 1.0, 1.0))?;
+            let v = multiply(m, Scalar::new(1.0, 1.0, scalar, 1.0))?;
+            Ok((h, s, v))
         })
         .collect()
+}
+
+/**
+Unzips a `Vec<(Mat, Mat, Mat)>` into three separate `Vec<Mat>`
+*/
+fn unzip3(v: Vec<(Mat, Mat, Mat)>) -> (Vec<Mat>, Vec<Mat>, Vec<Mat>) {
+    let mut v1 = Vec::with_capacity(v.len());
+    let mut v2 = Vec::with_capacity(v.len());
+    let mut v3 = Vec::with_capacity(v.len());
+
+    for (a, b, c) in v {
+        v1.push(a);
+        v2.push(b);
+        v3.push(c);
+    }
+
+    (v1, v2, v3)
 }
 
 /**
@@ -93,6 +118,7 @@ fn create_large_image(
     images: &Vec<Mat>,
     large_image_height: i32,
     large_image_width: i32,
+    typ: i32
 ) -> Result<Mat> {
     let small_image = images
         .get(0)
@@ -100,8 +126,8 @@ fn create_large_image(
     let height = small_image.rows() * large_image_height;
     let width = small_image.cols() * large_image_width;
 
-    // Creates a zero-initialized single channel (CV_8UC1) Matrix
-    let mut large_image = Mat::zeros(height, width, opencv::core::CV_8UC1)?.to_mat()?;
+    // Creates a zero-initialized Matrix
+    let mut large_image = Mat::zeros(height, width, typ)?.to_mat()?;
 
     for (idx, m) in images.iter().enumerate() {
         let width = m.cols();
