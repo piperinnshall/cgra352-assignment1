@@ -1,4 +1,5 @@
 mod core;
+mod completion;
 
 use anyhow::Result;
 use opencv::{core::Vector, imgcodecs, imgproc};
@@ -42,8 +43,14 @@ fn core(params: &Vector<i32>) -> Result<()> {
 
 fn completion(params: &Vector<i32>) -> Result<()> {
     let flower_grey = imgcodecs::imread("assets/Flower.jpg", imgcodecs::IMREAD_GRAYSCALE)?;
+    let sobel = completion::edge_detection(&flower_grey)?;
 
-    // imgcodecs::imwrite("assets/Completion0.jpg", &flower_grey, &params)?;
+    let completion_1 = sobel.0;
+    let completion_2 = sobel.1;
+    let completion_3 = sobel.2;
+    imgcodecs::imwrite("assets/Completion1.jpg", &completion_1, &params)?;
+    imgcodecs::imwrite("assets/Completion2.jpg", &completion_2, &params)?;
+    imgcodecs::imwrite("assets/Completion3.jpg", &completion_3, &params)?;
     Ok(())
 }
 
