@@ -1,13 +1,17 @@
 mod core;
 mod completion;
+mod challenge;
+
+use std::error::Error;
 
 use anyhow::Result;
 use opencv::{core::Vector, imgcodecs, imgproc};
 
-fn main() -> Result<()> {
+fn main() -> Result<(), Box<dyn Error>> {
     let params = Vector::default();
     core(&params)?;
     completion(&params)?;
+    challenge(&params)?;
     Ok(())
 }
 
@@ -43,14 +47,21 @@ fn core(params: &Vector<i32>) -> Result<()> {
 
 fn completion(params: &Vector<i32>) -> Result<()> {
     let flower_grey = imgcodecs::imread("assets/Flower.jpg", imgcodecs::IMREAD_GRAYSCALE)?;
-    let sobel = completion::edge_detection(&flower_grey)?;
 
-    let completion_1 = sobel.0;
-    let completion_2 = sobel.1;
-    let completion_3 = sobel.2;
+    // Completion
+    let (completion_1, completion_2, completion_3) = completion::edge_detection(&flower_grey)?;
+
     imgcodecs::imwrite("assets/Completion1.jpg", &completion_1, &params)?;
     imgcodecs::imwrite("assets/Completion2.jpg", &completion_2, &params)?;
     imgcodecs::imwrite("assets/Completion3.jpg", &completion_3, &params)?;
+
+    Ok(())
+}
+
+fn challenge(params: &Vector<i32>) -> Result<(), Box<dyn Error>> {
+    let building_grey = imgcodecs::imread("assets/Building.jpg", imgcodecs::IMREAD_GRAYSCALE)?;
+
+    let histogram = challenge::convert_histogram(&building_grey)?;
     Ok(())
 }
 
