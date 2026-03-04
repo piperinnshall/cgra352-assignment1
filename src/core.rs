@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use opencv::{
     core::{
-        AlgorithmHint, Mat, MatExprTraitConst, MatTrait, MatTraitConst, Rect, Scalar, Vec3b,
+        AlgorithmHint, Mat, MatTrait, MatTraitConst, Rect, Scalar, Vec3b,
         Vector, VectorToVec,
     },
     imgproc,
@@ -93,7 +93,7 @@ pub fn create_large_image(
     let width = small_image.cols() * large_image_width;
 
     // Create a zero-initialized Matrix
-    let mut large_image = Mat::zeros(height, width, typ)?.to_mat()?;
+    let mut large_image = Mat::new_rows_cols_with_default(height, width, typ, Scalar::default())?;
 
     for (idx, m) in images.iter().enumerate() {
         let height = m.rows();
@@ -116,8 +116,8 @@ pub fn create_large_image(
 Converts an image Matrix to an image mask.
 */
 pub fn euclidean_mask(m: &Mat) -> Result<Mat> {
-    // Create a zero-initialized greyscale Matrix
-    let mut dst = Mat::zeros(m.rows(), m.cols(), opencv::core::CV_8UC1)?.to_mat()?;
+    // Create a default-initialized greyscale Matrix
+    let mut dst = Mat::new_rows_cols_with_default(m.rows(), m.cols(), opencv::core::CV_8UC1, Scalar::default())?;
 
     let px_eighty = m.at_2d::<Vec3b>(80, 80)?;
 

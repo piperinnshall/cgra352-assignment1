@@ -2,12 +2,12 @@ mod core;
 mod completion;
 mod challenge;
 
-use std::error::Error;
+use std::fs::File;
 
 use anyhow::Result;
-use opencv::{core::Vector, imgcodecs, imgproc};
+use opencv::{core::{MatTraitConst, Vector}, imgcodecs, imgproc};
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<()> {
     let params = Vector::default();
     core(&params)?;
     completion(&params)?;
@@ -58,10 +58,12 @@ fn completion(params: &Vector<i32>) -> Result<()> {
     Ok(())
 }
 
-fn challenge(params: &Vector<i32>) -> Result<(), Box<dyn Error>> {
+fn challenge(_params: &Vector<i32>) -> Result<()> {
     let building_grey = imgcodecs::imread("assets/Building.jpg", imgcodecs::IMREAD_GRAYSCALE)?;
 
     let histogram = challenge::convert_histogram(&building_grey)?;
+    challenge::histogram_csv("assets/Challenge.csv",&histogram)?;
+
     Ok(())
 }
 
