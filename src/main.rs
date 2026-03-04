@@ -1,11 +1,9 @@
-mod core;
-mod completion;
 mod challenge;
-
-use std::fs::File;
+mod completion;
+mod core;
 
 use anyhow::Result;
-use opencv::{core::{MatTraitConst, Vector}, imgcodecs, imgproc};
+use opencv::{core::Vector, imgcodecs, imgproc};
 
 fn main() -> Result<()> {
     let params = Vector::default();
@@ -23,7 +21,6 @@ fn core(params: &Vector<i32>) -> Result<()> {
     let mut core_1 = Vec::new();
     core_1.append(&mut core::split_channels(&flower_bgr)?);
     core_1.append(&mut core::split_channels(&flower_hsv)?);
-
     let core_1_large = core::create_large_image(&core_1, 2, 3, opencv::core::CV_8UC1)?;
     imgcodecs::imwrite("assets/Core1.jpg", &core_1_large, &params)?;
 
@@ -33,7 +30,6 @@ fn core(params: &Vector<i32>) -> Result<()> {
     core_2.append(&mut flower_hsv_split.0);
     core_2.append(&mut flower_hsv_split.1);
     core_2.append(&mut flower_hsv_split.2);
-
     let core_2_large = core::create_large_image(&core_2, 3, 5, opencv::core::CV_8UC3)?;
     let core_2_large = core::convert_matrix_color_space(&core_2_large, imgproc::COLOR_HSV2BGR)?;
     imgcodecs::imwrite("assets/Core2.jpg", &core_2_large, &params)?;
@@ -50,7 +46,6 @@ fn completion(params: &Vector<i32>) -> Result<()> {
 
     // Completion
     let (completion_1, completion_2, completion_3) = completion::edge_detection(&flower_grey)?;
-
     imgcodecs::imwrite("assets/Completion1.jpg", &completion_1, &params)?;
     imgcodecs::imwrite("assets/Completion2.jpg", &completion_2, &params)?;
     imgcodecs::imwrite("assets/Completion3.jpg", &completion_3, &params)?;
@@ -58,12 +53,15 @@ fn completion(params: &Vector<i32>) -> Result<()> {
     Ok(())
 }
 
-fn challenge(_params: &Vector<i32>) -> Result<()> {
+fn challenge(params: &Vector<i32>) -> Result<()> {
     let building_grey = imgcodecs::imread("assets/Building.jpg", imgcodecs::IMREAD_GRAYSCALE)?;
 
+    // Challenge
     let histogram = challenge::convert_histogram(&building_grey)?;
-    challenge::histogram_csv("assets/Challenge.csv",&histogram)?;
-
+    let equalized = challenge::equalize_histogram(&histogram, &building_grey)?;
+    let equalized_histogram = challenge::convert_histogram(&equalized)?;
+    challenge::histogram_csv("assets/Challenge1.csv", &histogram)?;
+    challenge::histogram_csv("assets/Challenge2.csv", &equalized_histogram)?;
+    imgcodecs::imwrite("assets/Challenge1.jpg", &equalized, &params)?;
     Ok(())
 }
-
