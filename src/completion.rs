@@ -110,16 +110,20 @@ fn normalize(src: &Mat) -> Result<Mat> {
             .iter()
             .zip(dst_slice.iter_mut())
             .for_each(|(&src_pixel, dst_pixel)| {
-                *dst_pixel =
-                    (((src_pixel - min_val) / (max_val - min_val) * 255.0).clamp(0.0, 255.0)) as u8;
+                // Current min-max approach
+                // *dst_pixel =
+                //     (((src_pixel - min_val) / (max_val - min_val) * 255.0).clamp(0.0, 255.0)) as u8;
+                // Zero-centred approach 
+                let abs_max = min_val.abs().max(max_val.abs());
+                *dst_pixel = ((src_pixel / abs_max) * 127.0 + 127.0).clamp(0.0, 255.0) as u8;
             });
     }
     Ok(dst)
 }
 
 /**
-Main edge detection function
-*/
+  Main edge detection function
+  */
 pub fn edge_detection(m: &Mat) -> Result<(Mat, Mat, Mat)> {
     let laplacian = [[0.0, 1.0, 0.0], [1.0, -4.0, 1.0], [0.0, 1.0, 0.0]];
     let sobel_x = [[-1.0, 0.0, 1.0], [-2.0, 0.0, 2.0], [-1.0, 0.0, 1.0]];
