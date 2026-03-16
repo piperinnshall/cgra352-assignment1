@@ -1,4 +1,6 @@
 #import "@preview/charged-ieee:0.1.4": ieee
+#import "@preview/codly:1.3.0": *
+#import "@preview/codly-languages:0.1.1": *
 
 #show: ieee.with(
   title: [Assignment 1: Basic Operations, Edge Extraction by Convolution, And Histogram Equalization],
@@ -13,67 +15,191 @@
     ),
   ),
   index-terms: (),
-  bibliography: bibliography("refs.bib"),
+  // bibliography: bibliography("refs.bib"),
   figure-supplement: [Fig.],
 )
-
+#show: codly-init.with()
+#codly(
+  languages: codly-languages, 
+  zebra-fill: none,
+  stroke: none,
+  display-name: false,
+  lang-stroke: none,
+  lang-fill: (lang) => white,
+)
 
 = Introduction
-Scientific writing is a crucial part of the research process, allowing researchers to share their findings with the wider scientific community. However, the process of typesetting scientific documents can often be a frustrating and time-consuming affair, particularly when using outdated tools such as LaTeX. Despite being over 30 years old, it remains a popular choice for scientific writing due to its power and flexibility. However, it also comes with a steep learning curve, complex syntax, and long compile times, leading to frustration and despair for many researchers @netwok2020 @netwok2022.
 
-== Paper overview
-In this paper we introduce Typst, a new typesetting system designed to streamline the scientific writing process and provide researchers with a fast, efficient, and easy-to-use alternative to existing systems. Our goal is to shake up the status quo and offer researchers a better way to approach scientific writing.
+This program implements basic image processing operations using the OpenCV
+library, written in Rust. It covers color space conversion and channel
+manipulation, edge extraction via manual convolution, and histogram
+equalization. \ \
 
-By leveraging advanced algorithms and a user-friendly interface, Typst offers several advantages over existing typesetting systems, including faster document creation, simplified syntax, and increased ease-of-use.
+The program requires Rust and OpenCV to be installed. Before running, extract
+`assets.zip` to create the `assets/` directory. Output images will be written
+to the `assets/` directory. Running this program will call the Core,
+Completion, and Extension Functions. \ \
 
-To demonstrate the potential of Typst, we conducted a series of experiments comparing it to other popular typesetting systems, including LaTeX. Our findings suggest that Typst offers several benefits for scientific writing, particularly for novice users who may struggle with the complexities of LaTeX. Additionally, we demonstrate that Typst offers advanced features for experienced users, allowing for greater customization and flexibility in document creation.
+```bash
+unzip assets.zip
+cargo run
+```
 
-Overall, we believe that Typst represents a significant step forward in the field of scientific writing and typesetting, providing researchers with a valuable tool to streamline their workflow and focus on what really matters: their research. In the following sections, we will introduce Typst in more detail and provide evidence for its superiority over other typesetting systems in a variety of scenarios.
+ = Core
 
-= Methods <sec:methods>
-#lorem(45)
+#codly(number-format: none)
 
-$ a + b = gamma $ <eq:gamma>
+```rust 
+fn convert_matrix_color_space()
+``` 
+Converts a matrix to a different color space using OpenCV's `cvt_color` function,
+taking the source image matrix and an OpenCV color space conversion code (e.g.
+`COLOR_BGR2HSV`).
 
-#lorem(80)
+```rust
+fn split_channels()
+``` 
+Splits a multi-channel matrix into a vector of single-channel matrices.
 
-#figure(
-  placement: none,
-  circle(radius: 15pt),
-  caption: [A circle representing the Sun.]
-) <fig:sun>
+```rust
+fn multiply_channel()
+``` 
+Scales each HSV channel independently by 0.0, 0.2, 0.4, 0.6, and 
+0.8, returning three vectors of five matrices each: one vector per channel.
 
-In @fig:sun you can see a common representation of the Sun, which is a star that is located at the center of the solar system.
+```rust
+fn create_large_image()
+``` 
+Arranges a vector of same-sized matrices into a single grid image, taking the
+number of rows, columns, and output matrix type as parameters.
 
-#lorem(120)
+```rust
+fn euclidean_mask()
+``` 
+Creates a binary mask by computing the Euclidean distance of
+every pixel to the pixel at (80, 80). Pixels within a distance of 100 are set
+to 255, all others to 0.
 
-#figure(
-  caption: [The Planets of the Solar System and Their Average Distance from the Sun],
-  placement: top,
-  table(
-    // Table styling is not mandated by the IEEE. Feel free to adjust these
-    // settings and potentially move them into a set rule.
-    columns: (6em, auto),
-    align: (left, right),
-    inset: (x: 8pt, y: 4pt),
-    stroke: (x, y) => if y <= 1 { (top: 0.5pt) },
-    fill: (x, y) => if y > 0 and calc.rem(y, 2) == 0  { rgb("#efefef") },
+== Core 1
 
-    table.header[Planet][Distance (million km)],
-    [Mercury], [57.9],
-    [Venus], [108.2],
-    [Earth], [149.6],
-    [Mars], [227.9],
-    [Jupiter], [778.6],
-    [Saturn], [1,433.5],
-    [Uranus], [2,872.5],
-    [Neptune], [4,495.1],
-  )
-) <tab:planets>
+#figure(image("/assets/Core1.jpg"), caption: [BGR and HSV channels]) <core1>
 
-In @tab:planets, you see the planets of the solar system and their average distance from the Sun.
-The distances were calculated with @eq:gamma that we presented in @sec:methods.
+@core1 shows the Six channels of `Flower.jpg` split across 2 rows. The top row
+shows the separate B, G, and R channels. The R channels is the brightest
+channel, showing the flowers orange/yellow coloring. The background of the G
+channel is light, reflecting the grass behind the flower. The B channel is the
+darkest channel here. \ \
 
-#lorem(240)
+The bottom row of @core1 shows the H, S, and V color channels. The Hue appears
+nearly black because orange and yellow hues sit in the low end of the hue range
+(roughly 0-60#sym.degree), giving them small values that appear darker in the
+greyscale image. The S channel is bright where colours are vivid. The flower
+petals appear white since they are very saturated, while more neutral areas
+like the background grass appear darker gray. The V channel closely resembles a
+standard greyscale image, as it captures the brightness of each pixel
+independent of its colour.
 
-#lorem(240)
+== Core 2
+
+#figure(image("/assets/Core2.jpg"), caption: [HSV channel scaling]) <core2>
+
+@core2 shows the effect of scaling each HSV channel independently by 0.0, 0.2,
+0.4, 0.6, and 0.8. Scaling H shifts the hue toward red at lower values. Scaling
+S removes colour information, producing a grey image at 0.0. Scaling V reduces
+brightness, producing a black image at 0.0.
+
+== Core 3
+
+#figure(image("/assets/Core3.jpg"), caption: [Euclidean distance mask]) <core3>
+
+@core3 shows a binary mask where white pixels are within a Euclidean distance
+of 100 from the pixel at (80, 80) in RGB colour space, and black pixels are
+not. \ \
+
+In this case, Euclidean distance uses the Pythagorean theorem to measure the
+straight-line distance between two pixels in RGB colour space, computed as
+$sqrt((R_1-R_2)^2 + (G_1-G_2)^2 + (B_1-B_2)^2)$
+
+= Completion
+
+```rust
+fn edge_detection()
+```
+
+Applies Laplacian, Sobel-x, and Sobel-y kernels to a greyscale matrix via
+manual convolution, returning three normalized edge images. \ \ 
+
+The kernels are defined as:
+
+```rust
+let laplacian = [[0.0,  1.0, 0.0],
+                 [1.0, -4.0, 1.0],
+                 [0.0,  1.0, 0.0]];
+
+let sobel_x = [[-1.0, 0.0, 1.0],
+               [-2.0, 0.0, 2.0],
+               [-1.0, 0.0, 1.0]];
+
+let sobel_y = [[-1.0, -2.0, -1.0],
+               [ 0.0,  0.0,  0.0],
+               [ 1.0,  2.0,  1.0]];
+```
+The matrix is padded with a reflective border before convolution to prevent
+edge artifacts. Each pixel's 3 by 3 neighborhood is extracted and the dot product
+with the kernel is computed. The result is normalized so that the most negative
+value maps to 0, zero maps to 127, and the most positive value maps to 255. \ \
+
+#grid(
+  columns: 3,
+  [#figure(image("/assets/Completion1.jpg"), caption: [Laplacian]) <completion1>],
+  [#figure(image("/assets/Completion2.jpg"), caption: [Sobel X]) <completion2>],
+  [#figure(image("/assets/Completion3.jpg"), caption: [Sobel Y]) <completion3>],
+) \ 
+
+@completion1 shows that Laplacian detects edges in all directions, producing a
+flat, uniform response around edges. In @completion2 the Sobel X response is
+strongest on vertical edges, appearing spread horizontally. The Sobel Y
+response is strongest on horizontal edges, and @completion3 appears spread
+vertically.
+
+= Challenge
+
+```rust
+fn convert_histogram()
+```
+
+Computes a 256-bin histogram from a single-channel greyscale matrix using
+OpenCV's built in `calc_hist`.
+
+```rust
+fn equalize_histogram()
+```
+
+Equalizes a greyscale image by remapping pixel intensities via a lookup table. \ \
+
+The PDF is computed by dividing each bin count by the total number of pixels.
+The CDF is the running sum of the PDF, scaled to [0, 255] to produce the lookup
+table. Each pixel intensity is then remapped using the lookup table.
+
+#figure(image("/assets/Challenge1.jpg"), caption: [Histogram equalization result]) <challenge1>
+
+@challenge1 shows the equalized `Building.jpg`. The output has stronger
+contrast, with shadows appearing darker and highlights brighter compared to the
+original. \ \
+
+#grid(
+  columns: 2,
+  [#figure(image("/report/Histogram1.png"), caption: [before]) <histogram1>],
+  [#figure(image("/report/Histogram2.png"), caption: [after]) <histogram2>],
+) \ 
+
+@histogram1 shows the original histogram, with pixel intensities clustered in a
+narrow range. @histogram2 shows the equalized histogram, with intensities
+redistributed across the full [0, 255] range, with a concentration toward the
+brighter end.
+
+= AI Disclosure
+
+Claude (Anthropic) was used to assist with Typst (LaTeX like writing tool)
+syntax and selecting code snippets for the report. No AI tools were used in
+writing the program.

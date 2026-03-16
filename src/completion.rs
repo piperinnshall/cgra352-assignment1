@@ -110,7 +110,7 @@ fn normalize(src: &Mat) -> Result<Mat> {
             .iter()
             .zip(dst_slice.iter_mut())
             .for_each(|(&src_pixel, dst_pixel)| {
-                // Current min-max approach
+                // Old min-max approach
                 // *dst_pixel =
                 //     (((src_pixel - min_val) / (max_val - min_val) * 255.0).clamp(0.0, 255.0)) as u8;
                 // Zero-centred approach 
